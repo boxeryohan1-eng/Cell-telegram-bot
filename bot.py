@@ -12,9 +12,9 @@ logging.basicConfig(level=logging.INFO)
 TELEGRAM_TOKEN = os.getenv("TELEGRAM")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# 제미나이 공식 라이브러리 설정 (무료 버전 표준 모델인 gemini-pro 사용)
+# 제미나이 공식 라이브러리 설정 (무료 버전에서 안정적으로 지원되는 gemini-1.5-flash-8b 사용)
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel("gemini-pro")
+model = genai.GenerativeModel("gemini-1.5-flash-8b")
 
 # Render 포트 바인딩 에러 방지용 가짜 웹서버
 class SimpleHandler(BaseHTTPRequestHandler):
