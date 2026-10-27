@@ -14,7 +14,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
     chat_id = update.message.chat_id
 
-    # 모델명을 gemini-2.5-flash로 변경하여 오류 해결
+    # 최신 모델명 적용
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
     headers = {"Content-Type": "application/json"}
     data = {"contents": [{"parts": [{"text": user_message}]}]}
@@ -26,7 +26,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if 'candidates' in res_json:
             bot_reply = res_json['candidates'][0]['content']['parts'][0]['text']
         else:
-            bot_reply = f"제미나이 API 오류: {res_json.get('error', {}).get('message', '알 수 없는 오류')}"
+            error_msg = res_json.get('error', {}).get('message', '알 수 없는 오류')
+            bot_reply = f"제미나이 API 오류: {error_msg}"
     except Exception as e:
         bot_reply = f"오류가 발생했습니다: {str(e)}"
 
