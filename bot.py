@@ -12,10 +12,9 @@ logging.basicConfig(level=logging.INFO)
 TELEGRAM_TOKEN = os.getenv("TELEGRAM")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# 제미나이 공식 라이브러리 설정
+# 제미나이 공식 라이브러리 설정 (모델명을 gemini-2.5-flash로 변경)
 genai.configure(api_key=GEMINI_API_KEY)
-# 가장 안정적이고 호환성이 좋은 gemini-flash 모델 자동 선택 설정
-model = genai.GenerativeModel("gemini-1.5-flash")
+model = genai.GenerativeModel("gemini-2.5-flash")
 
 # Render 포트 바인딩 에러 방지용 가짜 웹서버
 class SimpleHandler(BaseHTTPRequestHandler):
@@ -37,7 +36,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.message.chat_id
 
     try:
-        # 공식 라이브러리를 통해 제미나이 응답 생성
         response = model.generate_content(user_message)
         bot_reply = response.text
     except Exception as e:
