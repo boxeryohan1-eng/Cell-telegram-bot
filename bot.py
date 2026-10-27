@@ -2,15 +2,22 @@ import os
 import logging
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
-import requests
+import google.generativeai as genai
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, CommandHandler, filters
 
+# 로그 설정
 logging.basicConfig(level=logging.INFO)
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
+# 제미나이 공식 라이브러리 설정
+genai.configure(api_key=GEMINI_API_KEY)
+# 가장 안정적이고 호환성이 좋은 gemini-flash 모델 자동 선택 설정
+model = genai.GenerativeModel("gemini-1.5-flash")
+
+# Render 포트 바인딩 에러 방지용 가짜 웹서버
 class SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -29,26 +36,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
     chat_id = update.message.chat_id
 
-    # 모델명 설정 (여기서 모델을 지정합니다)
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
-    headers = {"Content-Type": "application/json"}
-    data = {"contents": [{"parts": [{"text": user_message}]}]}
-
     try:
-        response = requests.post(url, headers=headers, json=data)
-        res_json = response.json()
-        
-        if 'candidates' in res_json:
-            bot_reply = res_json['candidates'][0]['content']['parts'][0]['text']
-        else:
-            error_msg = res_json.get('error', {}).get('message', '알 수 없는 오류')
-            bot_reply = f"제미나이 API 오류: {error_msg}"
+        # 공식 라이브러리를 통해 제미나이 응답 생성
+        response = model.generate_content(user_message)
+        bot_reply = response.text
     except Exception as e:
-        bot_reply = f"오류가 발생했습니다: {str(e)}"
+        bot_reply = f"제미나이 API 오류 발생: {str(e)}"
 
     await context.bot.send_message(chat_id=chat_id, text=bot_reply)
 
 if __name__ == '__main__':
+    # 백그라운드 웹서버 실행 (Render 대응)
     t = threading.Thread(target=run_server)
     t.daemon = True
     t.start()
