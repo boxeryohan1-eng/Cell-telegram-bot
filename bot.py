@@ -12,12 +12,15 @@ logging.basicConfig(level=logging.INFO)
 TELEGRAM_TOKEN = os.getenv("TELEGRAM")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# Render 포트 바인딩 에러 방지를 위한 간단한 가짜 웹서버
+# Render 포트 바인딩 에러 방지용 가짜 웹서버
 class SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
         self.wfile.write(b"Bot is alive!")
+    def do_HEAD(self):
+        self.send_response(200)
+        self.end_headers()
 
 def run_server():
     port = int(os.environ.get("PORT", 10000))
@@ -28,7 +31,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
     chat_id = update.message.chat_id
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+    # 최신 모델명 적용 (gemini-2.5-flash)
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
     headers = {"Content-Type": "application/json"}
     data = {"contents": [{"parts": [{"text": user_message}]}]}
 
@@ -47,7 +51,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=chat_id, text=bot_reply)
 
 if __name__ == '__main__':
-    # 백그라운드에서 가짜 웹서버 실행 (Render 포트 요구 충족)
+    # 백그라운드 웹서버 실행
     t = threading.Thread(target=run_server)
     t.daemon = True
     t.start()
