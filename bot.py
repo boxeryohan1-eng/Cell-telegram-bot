@@ -12,7 +12,10 @@ logging.basicConfig(level=logging.INFO)
 TELEGRAM_TOKEN = os.getenv("TELEGRAM")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# 제미나이 공식 라이브러리 설정 (gemini-3-flash-preview 모델 적용)
+# ⚠️ 여기에 본인의 텔레그램 봇 아이디를 입력하세요 (예: "@MyAwesome_bot")
+BOT_USERNAME = "@my_cell_pd_bot" 
+
+# 제미나이 공식 라이브러리 설정 (gemini-3-flash-preview 적용)
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel("gemini-3-flash-preview")
 
@@ -35,13 +38,26 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
     chat_id = update.message.chat_id
 
-    try:
-        response = model.generate_content(user_message)
-        bot_reply = response.text
-    except Exception as e:
-        bot_reply = f"제미나이 API 오류 발생: {str(e)}"
+    # 1. 봇 멘션(@봇아이디)이 포함되어 있는지 확인
+    if BOT_USERNAME in user_message:
+        # 멘션 문자열 제거 후 순수 질문 내용만 추출
+        cleaned_message = user_message.replace(BOT_USERNAME, "").strip()
+        
+        # 태그만 올리고 질문이 없을 경우 처리
+        if not cleaned_message:
+            await context.bot.send_message(chat_id=chat_id, text="네! 무엇을 도와드릴까요?")
+            return
 
-    await context.bot.send_message(chat_id=chat_id, text=bot_reply)
+        try:
+            response = model.generate_content(cleaned_message)
+            bot_reply = response.text
+        except Exception as e:
+            bot_reply = f"제미나이 API 오류 발생: {str(e)}"
+
+        await context.bot.send_message(chat_id=chat_id, text=bot_reply)
+    else:
+        # 태그가 없으면 아무 작업도 하지 않고 무시
+        pass
 
 if __name__ == '__main__':
     # 백그라운드 웹서버 실행 (Render 대응)
